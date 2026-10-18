@@ -672,6 +672,24 @@ struct Panel: View {
 
 // MARK: app
 
+/// AppKit routes Command-key editing shortcuts through the main menu, even in a menu bar app.
+func makeMainMenu() -> NSMenu {
+    let menu = NSMenu()
+    let appMenu = NSMenu(title: "baski")
+    appMenu.addItem(withTitle: "Quit baski", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+    menu.addItem(withTitle: "baski", action: nil, keyEquivalent: "").submenu = appMenu
+
+    let edit = NSMenu(title: "Edit")
+    for (title, action, key) in [("Cut", #selector(NSText.cut(_:)), "x"),
+                                 ("Copy", #selector(NSText.copy(_:)), "c"),
+                                 ("Paste", #selector(NSText.paste(_:)), "v"),
+                                 ("Select All", #selector(NSText.selectAll(_:)), "a")] {
+        edit.addItem(withTitle: title, action: action, keyEquivalent: key)
+    }
+    menu.addItem(withTitle: "Edit", action: nil, keyEquivalent: "").submenu = edit
+    return menu
+}
+
 final class App: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let model = Model()
@@ -683,6 +701,7 @@ final class App: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     var fake: [String: Any] = [:]
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        NSApp.mainMenu = makeMainMenu()
         item.button?.target = self
         item.button?.action = #selector(toggle)
 
