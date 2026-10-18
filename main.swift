@@ -819,14 +819,19 @@ final class App: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             fields[1].stringValue = p.serial
             fields[2].stringValue = accessCode(p.serial) ?? ""
         }
-        let stack = NSStackView(views: fields)
-        stack.orientation = .vertical
-        stack.frame = NSRect(x: 0, y: 0, width: 240, height: 88)
+        // Empty text fields have almost no intrinsic width in an NSStackView.
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 240, height: 88))
+        for (index, field) in fields.enumerated() {
+            field.frame = NSRect(x: 0, y: (2 - index) * 32, width: 240, height: 24)
+            accessory.addSubview(field)
+            if index < fields.count - 1 { field.nextKeyView = fields[index + 1] }
+        }
         let a = NSAlert()
         a.messageText = "Add Printer"
         a.informativeText = "All three are on the printer screen: Settings → Network (IP, access code) and Settings → Device (serial)."
-        a.accessoryView = stack
+        a.accessoryView = accessory
         a.addButton(withTitle: "Save"); a.addButton(withTitle: "Cancel")
+        a.window.initialFirstResponder = fields[0]
         NSApp.activate(ignoringOtherApps: true)
         guard a.runModal() == .alertFirstButtonReturn else { return }
         let v = fields.map { $0.stringValue.trimmingCharacters(in: .whitespaces) }
